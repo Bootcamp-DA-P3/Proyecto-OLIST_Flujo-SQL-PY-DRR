@@ -73,6 +73,7 @@ def ejecutar(engine, consulta_sql):
     raise NotImplementedError("ejecutar")
 
 
+
 def comprobar_grano(df):
     """Avisa si el número de filas no cuadra con el grano declarado.
 
