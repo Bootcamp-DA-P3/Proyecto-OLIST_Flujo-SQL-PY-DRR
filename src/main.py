@@ -70,8 +70,8 @@ def comprobar_grano(df):
     """
     if len(df) != df[CLAVE_DE_GRANO].nunique():
         print(f"⚠️ Cuidado: El grano no coincide. Filas: {len(df)}, Claves únicas: {df[CLAVE_DE_GRANO].nunique()}")
-else:
-    print("✅ Grano validado correctamente.")
+    else:
+        print("✅ Grano validado correctamente.")
 
 
 def exportar(df, nombre_csv):
