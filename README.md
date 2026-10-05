@@ -14,7 +14,12 @@ Tercer Proyecto - Bootcamp de Data Analytics
 
 ## 📌 Definición del Grano del Proyecto DF3
 
-***Criterio general aplicado***
+Una fila representa una línea de **pedido**, el código de **producto** solicitado, el código del **vendedor**, la **fecha límite** de envío, el **precio** de cada **unidad del producto**, los **gastos de envío** y la cantidad de **unidades** del producto **enviadas**.
+
+*order_id,	product_id,	seller_id,	shipping_limit_date,	price	freight_value,	cantidad*
+
+
+***Criterio general aplicado DF3***
 
 Durante la limpieza se siguieron estos criterios:
 - No modificar directamente los datos originales.
