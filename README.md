@@ -11,9 +11,9 @@ Tercer Proyecto - Bootcamp de Data Analytics
 
 ## 📋 Grano DF1 - Actividad del cliente
 
-Registro consolidado del historial y la actividad global de cada cliente único dentro de la plataforma Olist, agrupando su información geográfica, comportamiento de compra, métodos de pago utilizados y nivel de satisfacción reflejado en sus reseñas.
+Registro consolidado del historial y la actividad global de cada pedido dentro de la plataforma Olist, agrupando su información geográfica, cliente que lo solicita, comportamiento de compra, métodos de pago utilizados y nivel de satisfacción reflejado en sus reseñas.
 
-Columna que define al grano: customer_unique_id
+Columna que define al grano: order_id
 
 Script SQL asociado: Df1_actividad_clientes.sql
 
@@ -25,16 +25,17 @@ Script SQL asociado: Df1_actividad_clientes.sql
 
 2. **Integración y cruce de datos:**
    * Se combinaron mediante LEFT JOIN las tablas de pedidos, clientes, pagos, reseñas y geolocalización promediada.
+   * Consolidación por pedido: Se agruparon previamente las tablas de pagos (sumando valores y concatenando tipos de pago) y reseñas (promediando puntuaciones) para garantizar un grano de 1 fila por pedido/actividad.
 
 3. **Estandarización y normalización de textos:**
    * Se aplicaron funciones LOWER(TRIM(...)) sobre los campos de ciudad y estado para eliminar espacios innecesarios y homogenizar el formato a minúsculas.
 
 4. **Creación de columnas derivadas:**
-   * **delivery_days:** Calculado mediante DATEDIFF(order_delivered_customer_date, order_purchase_timestamp) para medir los días reales transcurridos hasta la entrega.
-   * **is_late:** Indicador binario mediante CASE WHEN (1 si order_delivered_customer_date > order_estimated_delivery_date, 0 en caso contrario) para rastrear entregas con retraso.
+   * ***delivery_days:*** Calculado mediante DATEDIFF(order_delivered_customer_date, order_purchase_timestamp) para medir los días reales transcurridos hasta la entrega.
+   * ***is_late:*** Indicador binario mediante CASE WHEN (1 si order_delivered_customer_date > order_estimated_delivery_date, 0 en caso contrario) para rastrear entregas con retraso.
 
 5. **Filtrado y depuración de calidad de datos:**
-   * Se filtraron únicamente los pedidos cuyo estado sea entregado.
+   * Se filtraron (se muestran) únicamente los pedidos cuyo estado sea entregado.
    * Se descartaron registros con fecha de entrega nula.
    * Se eliminaron transacciones con importes no válidos o métodos de pago sin definir.
    * Se corrigieron inconsistencias temporales asegurando que la fecha de compra sea estrictamente anterior a la fecha de entrega.   
