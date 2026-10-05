@@ -77,7 +77,7 @@ def comprobar_grano(df):
 def exportar(df, nombre_csv):
     """Guarda el DataFrame en data/ como CSV."""
 DATA.mkdir(exist_ok=True)  # por si la carpeta no existe todavía
-ruta_salida = DATA / Df1_actividad_clientes.sql
+ruta_salida = DATA / "Df1_actividad_clientes.sql"
 df.to_csv(ruta_salida, index=False, encoding="utf-8")
 
 def main():
