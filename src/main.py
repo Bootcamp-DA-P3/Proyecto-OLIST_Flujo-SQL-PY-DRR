@@ -54,16 +54,11 @@ def leer_consulta(nombre):
     La consulta vive en su fichero, no incrustada aquí: así la misma que
     probasteis en Workbench es la que ejecuta el script.
     """
-    # TODO: leer el fichero SQL / nombre y devolver su texto
-    #       Pista: los objetos Path tienen un método read_text()
-    raise NotImplementedError("leer_consulta")
+    return (SQL / nombre).read_text(encoding="utf-8")
 
 
 def ejecutar(engine, consulta_sql):
-    """Ejecuta la consulta y devuelve un DataFrame de pandas."""
-    # TODO: abrir una conexión y leer el resultado en un DataFrame
-    #       Pista: pandas sabe hablar con SQLAlchemy directamente
-    raise NotImplementedError("ejecutar")
+   return pd.read_sql(consulta_sql, engine)
 
 
 def comprobar_grano(df):
@@ -73,18 +68,17 @@ def comprobar_grano(df):
     len(df) == número de order_id distintos. Si no cuadra, el JOIN
     está duplicando filas y todas vuestras sumas serán mayores de lo real.
     """
-    # TODO: comparar el total de filas con el de valores únicos de
-    #       CLAVE_DE_GRANO, e imprimir un aviso claro si no coinciden
-    raise NotImplementedError("comprobar_grano")
+    if len(df) != df[CLAVE_DE_GRANO].nunique():
+    print(f"⚠️ Cuidado: El grano no coincide. Filas: {len(df)}, Claves únicas: {df[CLAVE_DE_GRANO].nunique()}")
+else:
+    print("✅ Grano validado correctamente.")
 
 
 def exportar(df, nombre_csv):
     """Guarda el DataFrame en data/ como CSV."""
     DATA.mkdir(exist_ok=True)  # por si la carpeta no existe todavía
-    # TODO: exportar a DATA / nombre_csv
-    #       Cuidado con dos cosas: el índice y la codificación de los acentos
-    raise NotImplementedError("exportar")
-
+   ruta_salida = DATA / nombre_csv
+df.to_csv(ruta_salida, index=False, encoding="utf-8")
 
 def main():
     if not GRANO or not CLAVE_DE_GRANO:
