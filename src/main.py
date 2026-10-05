@@ -69,7 +69,7 @@ def comprobar_grano(df):
     está duplicando filas y todas vuestras sumas serán mayores de lo real.
     """
     if len(df) != df[CLAVE_DE_GRANO].nunique():
-    print(f"⚠️ Cuidado: El grano no coincide. Filas: {len(df)}, Claves únicas: {df[CLAVE_DE_GRANO].nunique()}")
+        print(f"⚠️ Cuidado: El grano no coincide. Filas: {len(df)}, Claves únicas: {df[CLAVE_DE_GRANO].nunique()}")
 else:
     print("✅ Grano validado correctamente.")
 
