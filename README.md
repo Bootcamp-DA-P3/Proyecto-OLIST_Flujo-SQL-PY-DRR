@@ -19,21 +19,25 @@ Script SQL asociado: Df1_actividad_clientes.sql
 
 ## 🔗 Criterios y pasos de limpieza aplicados en DF1:
 
-1. Preprocesamiento de geolocalización:
-      Se creó una tabla temporal para promediar las coordenadas de latitud  y longitud por código postal.
-      Se asignó *geolocation_zip_code_prefix* como clave primaria en la tabla temporal para optimizar el rendimiento de los cruces.
-2. Integración y cruce de datos:
-      Se combinaron mediante LEFT JOIN las tablas de pedidos, clientes, pagos, reseñas y geolocalización promediada.
-3. Estandarización y normalización de textos:
-      Se aplicaron funciones LOWER(TRIM(...)) sobre los campos de ciudad y estado para eliminar espacios innecesarios y homogenizar el formato a minúsculas.
-4. Creación de columnas derivadas:
-      *delivery_days:* Calculado mediante DATEDIFF(order_delivered_customer_date, order_purchase_timestamp) para medir los días reales transcurridos hasta la entrega.
-      *is_late:* Indicador binario mediante CASE WHEN (1 si order_delivered_customer_date > order_estimated_delivery_date, 0 en caso contrario) para rastrear entregas con retraso.
-5. Filtrado y depuración de calidad de datos:
-      Se filtraron únicamente los pedidos cuyo estado sea entregado.
-      Se descartaron registros con fecha de entrega nula.
-      Se eliminaron transacciones con importes no válidos o métodos de pago sin definir.
-      Se corrigieron inconsistencias temporales asegurando que la fecha de compra sea estrictamente anterior a la fecha de entrega.   
+1. **Preprocesamiento de geolocalización:**
+   * Se creó una tabla temporal para promediar las coordenadas de latitud y longitud por código postal.
+   * Se asignó *geolocation_zip_code_prefix* como clave primaria en la tabla temporal para optimizar el rendimiento de los cruces.
+
+2. **Integración y cruce de datos:**
+   * Se combinaron mediante LEFT JOIN las tablas de pedidos, clientes, pagos, reseñas y geolocalización promediada.
+
+3. **Estandarización y normalización de textos:**
+   * Se aplicaron funciones LOWER(TRIM(...)) sobre los campos de ciudad y estado para eliminar espacios innecesarios y homogenizar el formato a minúsculas.
+
+4. **Creación de columnas derivadas:**
+   * **delivery_days:** Calculado mediante DATEDIFF(order_delivered_customer_date, order_purchase_timestamp) para medir los días reales transcurridos hasta la entrega.
+   * **is_late:** Indicador binario mediante CASE WHEN (1 si order_delivered_customer_date > order_estimated_delivery_date, 0 en caso contrario) para rastrear entregas con retraso.
+
+5. **Filtrado y depuración de calidad de datos:**
+   * Se filtraron únicamente los pedidos cuyo estado sea entregado.
+   * Se descartaron registros con fecha de entrega nula.
+   * Se eliminaron transacciones con importes no válidos o métodos de pago sin definir.
+   * Se corrigieron inconsistencias temporales asegurando que la fecha de compra sea estrictamente anterior a la fecha de entrega.   
 ---
 
 ## 📌 Definición del Grano del Proyecto DF2 (Catálogo de Productos)
