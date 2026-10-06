@@ -29,14 +29,14 @@ DATA = RAIZ / "data"
 # ---------------------------------------------------------------------------
 
 # ¿Cuál de las tres consultas lleváis hasta el CSV?
-CONSULTA = "Df1_actividad_clientes.sql"
+CONSULTA = "df2_catalogo_de_productos.sql"  # <-- poned aquí el nombre del fichero .sql que queréis ejecutar
 
 # El grano, en lenguaje de negocio. Ejemplo: "un pedido entregado"
 GRANO = "Actividad de cada cliente"
 
 # La columna que identifica una fila según ese grano. Ejemplo: "order_id"
 # Sirve para comprobar que el JOIN no está multiplicando filas.
-CLAVE_DE_GRANO = "customers_unique_id"
+CLAVE_DE_GRANO = "product_id"
 
 
 # ---------------------------------------------------------------------------
@@ -55,10 +55,23 @@ def leer_consulta(nombre):
     probasteis en Workbench es la que ejecuta el script.
     """
     return (SQL / nombre).read_text(encoding="utf-8")
+    raise NotImplementedError("leer_consulta")
 
 
 def ejecutar(engine, consulta_sql):
-   return pd.read_sql(consulta_sql, engine)
+    """Ejecuta la consulta y devuelve un DataFrame de pandas."""
+    with engine.connect() as con:
+        sentencias = [s.strip() for s in consulta_sql.split(";") if s.strip()]
+        
+        # Ejecuta la creación de la tabla
+        for sentencia in sentencias[:-1]:
+            con.execute(text(sentencia))
+            con.commit()
+            
+        # Ejecuta el SELECT * y lo carga en el DataFrame
+        return pd.read_sql_query(sql=text(sentencias[-1]), con=con)
+    raise NotImplementedError("ejecutar")
+
 
 
 def comprobar_grano(df):
@@ -68,17 +81,22 @@ def comprobar_grano(df):
     len(df) == número de order_id distintos. Si no cuadra, el JOIN
     está duplicando filas y todas vuestras sumas serán mayores de lo real.
     """
-    if len(df) != df[CLAVE_DE_GRANO].nunique():
-        print(f"⚠️ Cuidado: El grano no coincide. Filas: {len(df)}, Claves únicas: {df[CLAVE_DE_GRANO].nunique()}")
+    total_filas = len(df)
+    unicos = df[CLAVE_DE_GRANO].nunique()
+    
+    if total_filas == unicos:
+        print(f"✅ Validación de grano correcta: {total_filas} filas coinciden exactamente con {unicos} '{CLAVE_DE_GRANO}' únicos.")
     else:
-        print("✅ Grano validado correctamente.")
+        print(f"⚠️ ¡ALERTA! El número de filas ({total_filas}) no coincide con el número de '{CLAVE_DE_GRANO}' únicos ({unicos}). Es posible que el JOIN esté duplicando registros.")
+        raise NotImplementedError("comprobar_grano")
 
 
 def exportar(df, nombre_csv):
     """Guarda el DataFrame en data/ como CSV."""
-DATA.mkdir(exist_ok=True)  # por si la carpeta no existe todavía
-ruta_salida = DATA / Df1_actividad_clientes
-df.to_csv(ruta_salida, index=False, encoding="utf-8")
+    DATA.mkdir(exist_ok=True)  # por si la carpeta no existe todavía
+    df.to_csv(DATA / nombre_csv, index=False, encoding="utf-8-sig")
+    raise NotImplementedError("exportar")
+
 
 def main():
     if not GRANO or not CLAVE_DE_GRANO:
