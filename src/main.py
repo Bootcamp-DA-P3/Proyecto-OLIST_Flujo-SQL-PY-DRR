@@ -32,7 +32,7 @@ DATA = RAIZ / "data"
 CONSULTA = "df2_catalogo_de_productos.sql"  # <-- poned aquí el nombre del fichero .sql que queréis ejecutar
 
 # El grano, en lenguaje de negocio. Ejemplo: "un pedido entregado"
-GRANO = "Actividad de cada cliente"
+GRANO = "pedido entregado"
 
 # La columna que identifica una fila según ese grano. Ejemplo: "order_id"
 # Sirve para comprobar que el JOIN no está multiplicando filas.
