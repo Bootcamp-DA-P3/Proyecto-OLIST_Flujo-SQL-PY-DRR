@@ -146,6 +146,14 @@ WHERE oi.product_id IS NULL;
 -- Se agrupan las filas del mismo producto dentro del pedido
 -- y se crea una columna cantidad con COUNT(*).
 
+-- 4. Evitar duplicación en order_items
+-- order_items contiene una fila por unidad.
+-- Se agrupan las filas del mismo producto dentro del pedido
+-- y se crea una columna cantidad con COUNT(*).
+
+DROP TABLE IF EXISTS Df3_agrupacion_pedidos;
+
+CREATE TABLE Df3_agrupacion_pedidos AS
 SELECT
     order_id,
     product_id,
@@ -168,3 +176,5 @@ GROUP BY
 -- Las unidades repetidas del mismo producto dentro de un pedido
 -- quedan agrupadas en una sola fila.
 -- La columna cantidad indica el número de unidades
+
+SELECT * FROM df3_agrupacion_pedidos;
