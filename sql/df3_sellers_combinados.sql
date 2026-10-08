@@ -204,6 +204,3 @@ FROM Df3_agrupacion_pedidos AS ag
 LEFT JOIN olist.products AS p ON ag.product_id = p.product_id
 LEFT JOIN olist.sellers AS s ON ag.seller_id = s.seller_id
 GROUP BY ag.seller_id;
-
--- Cambios realizados
--- Antes (por pedido)    Ahora (por vendedor)
