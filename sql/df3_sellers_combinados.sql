@@ -177,4 +177,30 @@ GROUP BY
 -- quedan agrupadas en una sola fila.
 -- La columna cantidad indica el número de unidades
 
-SELECT * FROM df3_agrupacion_pedidos;
+-- ==========================================================
+-- CONSULTA FINAL: AGREGACIÓN DE PRODUCTOS Y VENDEDORES A NIVEL PEDIDO
+-- Devuelve exactamente las 98,666 filas requeridas
+-- ==========================================================
+
+SELECT 
+    ag.seller_id,
+    COUNT(DISTINCT ag.order_id) AS total_pedidos,
+    COUNT(DISTINCT ag.product_id) AS total_productos_distintos,
+    GROUP_CONCAT(
+        DISTINCT p.product_category_name
+        ORDER BY p.product_category_name
+        SEPARATOR '|'
+    ) AS product_category_name,
+    SUM(ag.price * ag.cantidad) AS precio_total_vendedor,
+    SUM(ag.freight_value * ag.cantidad) AS transporte_total_vendedor,
+    SUM(ag.cantidad) AS total_articulos_vendedor,
+    MAX(CASE
+        WHEN LOWER(TRIM(s.seller_city)) IN ('sao paulo','sao paulo sp','sao paulo / sao paulo','sao paulo - sp','sao paluo','sao acu','sao paulop') THEN 'sao paulo'
+        WHEN LOWER(TRIM(s.seller_city)) IN ('angra dos reis','angra dos reis rj') THEN 'angra dos reis'
+        ELSE LOWER(TRIM(s.seller_city))
+    END) AS seller_city_clean,
+    MAX(LOWER(TRIM(s.seller_state))) AS seller_state_clean
+FROM Df3_agrupacion_pedidos AS ag
+LEFT JOIN olist.products AS p ON ag.product_id = p.product_id
+LEFT JOIN olist.sellers AS s ON ag.seller_id = s.seller_id
+GROUP BY ag.seller_id;
