@@ -57,8 +57,9 @@ Script SQL asociado: Df1_actividad_clientes.sql
 ---
 
 ## 📌 Definición del Grano del Proyecto DF3 y Limpieza
-
 ---
+Columna que define al grano: seller_id
+
 ### Criterio general aplicado
 Durante la limpieza se siguieron estos criterios:
 * No modificar directamente los datos originales.
