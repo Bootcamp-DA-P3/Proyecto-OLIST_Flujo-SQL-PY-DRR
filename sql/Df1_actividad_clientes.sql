@@ -1,11 +1,7 @@
 -- GRANO DECLARADO: Una fila = Actividad de compra de un cliente
 -- Por actividad de compra entendemos método de pago, satisfacción y lugar desde donde se realiza el pedido
 
-USE olist;
-
 -- Preparamos la geolocalización promediada e indexada
--- Este paso es necesario realizarlo el primero para que SQL no de problemas más tarde al procesar muchas filas
-
 DROP TABLE IF EXISTS temp_geolocation_clean;
 
 CREATE TABLE temp_geolocation_clean AS
@@ -20,7 +16,7 @@ GROUP BY geolocation_zip_code_prefix;
 
 ALTER TABLE temp_geolocation_clean ADD PRIMARY KEY (geolocation_zip_code_prefix);
 
--- CREAMOS EL NUEVO DATAFRAME
+-- CREAMOS EL NUEVO DATAFRAME (AGRUPANDO PAGOS Y REVIEWS)
 
 DROP TABLE IF EXISTS actividad_de_clientes;
 
@@ -42,13 +38,13 @@ SELECT
     o.order_delivered_customer_date,
     o.order_estimated_delivery_date,
     
-    -- Columnas de order_payments
+    -- Columnas de order_payments (agrupados por pedido)
     p.payment_sequential,
     p.payment_type,
     p.payment_installments,
     p.payment_value,
     
-    -- Columnas de order_reviews
+    -- Columnas de order_reviews (agrupadas por pedido)
     r.review_id,
     r.review_score,
     r.review_comment_title,
@@ -56,7 +52,7 @@ SELECT
     r.review_creation_date,
     r.review_answer_timestamp,
     
-    -- Columnas de geolocation (promediadas previamente)
+    -- Columnas de geolocation
     g.geolocation_lat,
     g.geolocation_lng,
     g.geolocation_city AS geo_city,
@@ -65,10 +61,33 @@ SELECT
 FROM orders o
 LEFT JOIN customers c 
     ON o.customer_id = c.customer_id
-LEFT JOIN order_payments p 
-    ON o.order_id = p.order_id
-LEFT JOIN order_reviews r 
-    ON o.order_id = r.order_id
+
+-- 1. SUBPROBLEMA RESUELTO: Agrupamos pagos para consolidar 1 fila por pedido
+LEFT JOIN (
+    SELECT 
+        order_id,
+        MIN(payment_sequential) AS payment_sequential,
+        GROUP_CONCAT(DISTINCT payment_type SEPARATOR '/') AS payment_type,
+        MAX(payment_installments) AS payment_installments,
+        SUM(payment_value) AS payment_value
+    FROM order_payments
+    GROUP BY order_id
+) p ON o.order_id = p.order_id
+
+-- 2. SUBPROBLEMA RESUELTO: Agrupamos reviews para consolidar 1 fila por pedido
+LEFT JOIN (
+    SELECT 
+        order_id,
+        MAX(review_id) AS review_id,
+        AVG(review_score) AS review_score,
+        MAX(review_comment_title) AS review_comment_title,
+        MAX(review_comment_message) AS review_comment_message,
+        MAX(review_creation_date) AS review_creation_date,
+        MAX(review_answer_timestamp) AS review_answer_timestamp
+    FROM order_reviews
+    GROUP BY order_id
+) r ON o.order_id = r.order_id
+
 LEFT JOIN temp_geolocation_clean g 
     ON c.customer_zip_code_prefix = g.geolocation_zip_code_prefix;
     
@@ -135,3 +154,6 @@ WHERE
     
     -- 4. Inconsistencia temporal: la compra debe ser anterior a la entrega
     AND order_purchase_timestamp < order_delivered_customer_date;
+
+-- SELECT FINAL PARA EXTRAER LOS DATOS DESDE PYTHON
+SELECT * FROM actividad_de_clientes_limpio;
