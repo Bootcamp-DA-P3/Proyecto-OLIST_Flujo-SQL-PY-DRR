@@ -50,6 +50,43 @@ def marcar_ingresos_atipicos(df):
     """
     return df
 
+def limpiar_df3_vendedores(df):
+    """Limpieza del dataset Df3: una fila por vendedor."""
+    df = df.copy()
+
+    # Normalizar los textos conservando los valores nulos.
+    for columna in [
+        "seller_city_clean",
+        "seller_state_clean",
+        "product_category_name",
+    ]:
+        df[columna] = (
+            df[columna]
+            .astype("string")
+            .str.strip()
+            .str.lower()
+        )
+
+    # Convertir los contadores a números enteros.
+    for columna in [
+        "total_pedidos",
+        "total_productos_distintos",
+        "total_articulos_vendedor",
+    ]:
+        df[columna] = pd.to_numeric(
+            df[columna], errors="raise"
+        ).astype("Int64")
+
+    # Convertir los importes a números.
+    for columna in [
+        "precio_total_vendedor",
+        "transporte_total_vendedor",
+    ]:
+        df[columna] = pd.to_numeric(
+            df[columna], errors="raise"
+        )
+
+    return df
 
 # Reglas que se aplican a todos los datasets.
 COMUNES = [tipar_fechas]
@@ -61,6 +98,7 @@ LIMPIEZA = {
     "vendedores": [],
     "entregas_retrasos": [],
     "ventas_detalle": [],
+    "df3_sellers_combinados": [limpiar_df3_vendedores],
 }
 
 # Si algun equipo usa la tabla geolocation, es la unica de Olist que esta
