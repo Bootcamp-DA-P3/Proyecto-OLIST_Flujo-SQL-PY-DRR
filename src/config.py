@@ -21,21 +21,14 @@ load_dotenv(RAIZ / ".env")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_HOST = os.getenv("DB_HOST", "localhost")
+DB_PORT = os.getenv("DB_PORT", "3306")
 DB_NAME = os.getenv("DB_NAME", "olist")
 
-_faltan = [
-    nombre
-    for nombre, valor in (
-        ("DB_USER", DB_USER),
-        ("DB_PASSWORD", DB_PASSWORD),
-        ("DB_HOST", DB_HOST),
-        ("DB_NAME", DB_NAME),
-    )
-    if not valor
-]
+# Carpetas de trabajo
+CARPETA_QUERIES = RAIZ / "queries"
+CARPETA_OUTPUT = RAIZ / os.getenv("OUTPUT_FOLDER", "output")
 
-if _faltan:
-    raise RuntimeError(
-        f"Faltan variables en el .env: {', '.join(_faltan)}.\n"
-        "Copia .env_example a .env y rellena tus credenciales."
-    )
+# Excel. El ETL no disena el dashboard: solo crea el libro si no existe,
+# apunta a las fuentes y lo abre.
+EXCEL_FILE = RAIZ / os.getenv("EXCEL_FILE", "dashboard/Olist_Dashboard.xlsx")
+AUTO_OPEN_EXCEL = os.getenv("AUTO_OPEN_EXCEL", "true").lower() == "true"
