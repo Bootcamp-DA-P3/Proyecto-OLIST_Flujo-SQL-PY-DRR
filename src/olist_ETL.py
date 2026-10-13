@@ -1,123 +1,108 @@
-"""
-Proyecto III · Flujo de datos de SQL a Python
+"""ETL de Olist: extrae con SQL, comprueba el grano y deja un CSV por consulta.
 
-Lee UNA de las consultas de sql/, la ejecuta contra MySQL y exporta el
-resultado a data/.
+Las tres fases del proceso estan separadas a proposito:
+    extraer   -> lee el .sql y lo ejecuta contra MySQL
+    comprobar -> valida que el resultado tiene el grano declarado
+    limpiar   -> aplica las reglas de src/limpieza.py
+    exportar  -> escribe el CSV que consumira Excel
 
-Ejecutar desde la RAÍZ del proyecto:
-
-    python src/main.py
-
-Las funciones están declaradas pero vacías: os toca a vosotros.
-Cada TODO dice qué hacer, no cómo.
+Las comprobaciones de grano son las que diferencian un ETL de un script que
+escribe ficheros.
 """
 
-from pathlib import Path
+from urllib.parse import quote_plus
 
 import pandas as pd
 from sqlalchemy import create_engine, text
 
-from config import DB_USER, DB_PASSWORD, DB_HOST, DB_NAME
+from src.limpieza import limpiar
+from src.config import (
+    CARPETA_OUTPUT,
+    CARPETA_QUERIES,
+    DB_HOST,
+    DB_NAME,
+    DB_PASSWORD,
+    DB_PORT,
+    DB_USER,
+)
 
-RAIZ = Path(__file__).resolve().parent.parent
-SQL = RAIZ / "sql"
-DATA = RAIZ / "data"
+# Cada consulta con la columna que define su grano.
+# Si la consulta devuelve mas filas que valores distintos en esa columna,
+# algun JOIN esta multiplicando y el CSV es incorrecto.
+CONSULTAS = {
+    # TABLA DE HECHOS. Mide, y es el centro del modelo.
+    "ventas_detalle": "linea_id",
 
+    # DIMENSIONES. Describen, y se unen al hecho por su clave.
+    "clientes_actividad": "customer_unique_id",
+    "catalogo_productos": "product_id",
+    "vendedores": "seller_id",
 
-# ---------------------------------------------------------------------------
-# CONFIGURACIÓN DEL EQUIPO · rellenad estas tres líneas antes de programar
-# ---------------------------------------------------------------------------
-
-# ¿Cuál de las tres consultas lleváis hasta el CSV?
-CONSULTA = "df3_sellers_combinados.sql"  # <-- poned aquí el nombre del fichero .sql que queréis ejecutar
-
-# El grano, en lenguaje de negocio. Ejemplo: "un pedido entregado"
-GRANO = "Vendedor"
-
-# La columna que identifica una fila según ese grano. Ejemplo: "order_id"
-# Sirve para comprobar que el JOIN no está multiplicando filas.
-CLAVE_DE_GRANO = "seller_id"
-
-
-# ---------------------------------------------------------------------------
+    # Segundo hecho, a grano de pedido: mide la entrega.
+    # Un modelo puede tener varios hechos mientras cada uno declare su grano.
+    "entregas_retrasos": "order_id",
+}
 
 
 def crear_engine():
-    """Crea el motor de conexión a MySQL con las credenciales del .env."""
-    url = f"mysql+mysqlconnector://{DB_USER}:{DB_PASSWORD}@{DB_HOST}/{DB_NAME}"
+    """Devuelve el engine de SQLAlchemy a partir de las credenciales del .env."""
+    if not DB_USER or not DB_PASSWORD:
+        raise RuntimeError(
+            "Faltan DB_USER o DB_PASSWORD en el fichero .env. "
+            "Copiad .env.example como .env y rellenadlo."
+        )
+    # quote_plus escapa los caracteres que romperian la URL (@, #, /, ...).
+    url = (
+        f"mysql+mysqlconnector://{quote_plus(DB_USER)}:{quote_plus(DB_PASSWORD)}"
+        f"@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+    )
     return create_engine(url)
 
 
-def leer_consulta(nombre):
-    """Devuelve el contenido del fichero .sql que hay en sql/.
-
-    La consulta vive en su fichero, no incrustada aquí: así la misma que
-    probasteis en Workbench es la que ejecuta el script.
-    """
-    return (SQL / nombre).read_text(encoding="utf-8")
-    raise NotImplementedError("leer_consulta")
-
-
-def ejecutar(engine, consulta_sql):
-    """Ejecuta la consulta y devuelve un DataFrame de pandas."""
-    with engine.connect() as con:
-        sentencias = [s.strip() for s in consulta_sql.split(";") if s.strip()]
-        
-        # Ejecuta la creación de la tabla
-        for sentencia in sentencias[:-1]:
-            con.execute(text(sentencia))
-            con.commit()
-            
-        # Ejecuta el SELECT * y lo carga en el DataFrame
-        return pd.read_sql_query(sql=text(sentencias[-1]), con=con)
-    raise NotImplementedError("ejecutar")
+def extraer(engine, nombre):
+    """Ejecuta queries/<nombre>.sql y devuelve el resultado como DataFrame."""
+    ruta = CARPETA_QUERIES / f"{nombre}.sql"
+    if not ruta.exists():
+        raise FileNotFoundError(f"No existe la consulta {ruta}")
+    # El punto y coma final sobra al enviar la consulta desde Python.
+    consulta = ruta.read_text(encoding="utf-8").strip().rstrip(";")
+    return pd.read_sql(text(consulta), engine)
 
 
+def comprobar_grano(df, clave, nombre):
+    """Detiene el proceso si la consulta no respeta el grano que declara."""
+    if clave not in df.columns:
+        raise KeyError(f"{nombre}: la consulta no devuelve la columna de grano '{clave}'")
 
-def comprobar_grano(df):
-    """Avisa si el número de filas no cuadra con el grano declarado.
-
-    Si el grano es 'un pedido', entonces debe cumplirse que
-    len(df) == número de order_id distintos. Si no cuadra, el JOIN
-    está duplicando filas y todas vuestras sumas serán mayores de lo real.
-    """
-    total_filas = len(df)
-    unicos = df[CLAVE_DE_GRANO].nunique()
-    
-    if total_filas == unicos:
-        print(f"✅ Validación de grano correcta: {total_filas} filas coinciden exactamente con {unicos} '{CLAVE_DE_GRANO}' únicos.")
-    else:
-        print(f"⚠️ ¡ALERTA! El número de filas ({total_filas}) no coincide con el número de '{CLAVE_DE_GRANO}' únicos ({unicos}). Es posible que el JOIN esté duplicando registros.")
-        raise NotImplementedError("comprobar_grano")
-
-
-def exportar(df, nombre_csv):
-    """Guarda el DataFrame en data/ como CSV."""
-    DATA.mkdir(exist_ok=True)  # por si la carpeta no existe todavía
-    df.to_csv(DATA / nombre_csv, index=False, encoding="utf-8-sig")
-    raise NotImplementedError("exportar")
-
-
-def main():
-    if not GRANO or not CLAVE_DE_GRANO:
-        raise SystemExit(
-            "Antes de ejecutar: rellenad GRANO y CLAVE_DE_GRANO arriba.\n"
-            "Si no sabéis qué poner, aún no estáis listos para escribir el JOIN."
+    distintos = df[clave].nunique(dropna=False)
+    if distintos != len(df):
+        raise ValueError(
+            f"{nombre}: {len(df)} filas para {distintos} valores distintos de '{clave}'. "
+            "Algo esta multiplicando filas: el JOIN del .sql o una regla de limpieza."
         )
 
-    print(f"Consulta ....... {CONSULTA}")
-    print(f"Grano .......... una fila = {GRANO}")
 
+def exportar(df, nombre):
+    """Escribe el CSV en output/ y devuelve la ruta."""
+    CARPETA_OUTPUT.mkdir(parents=True, exist_ok=True)
+    destino = CARPETA_OUTPUT / f"{nombre}.csv"
+    # utf-8-sig para que Excel abra los acentos correctamente.
+    df.to_csv(destino, index=False, encoding="utf-8-sig")
+    return destino
+
+
+def ejecutar_etl():
+    """Recorre todas las consultas. Devuelve {nombre: (filas, ruta del csv)}."""
     engine = crear_engine()
-    consulta_sql = leer_consulta(CONSULTA)
-    df = ejecutar(engine, consulta_sql)
+    resultados = {}
 
-    print(f"Filas .......... {len(df):,}")
-    print(f"Columnas ....... {df.shape[1]}")
+    for nombre, clave_de_grano in CONSULTAS.items():
+        df = extraer(engine, nombre)
+        # Se comprueba dos veces a proposito: la primera senala un JOIN mal
+        # hecho en el .sql, la segunda una limpieza que duplica filas.
+        comprobar_grano(df, clave_de_grano, f"{nombre} (SQL)")
+        df = limpiar(df, nombre)
+        comprobar_grano(df, clave_de_grano, f"{nombre} (tras limpiar)")
+        resultados[nombre] = (len(df), exportar(df, nombre))
 
-    comprobar_grano(df)
-    exportar(df, CONSULTA.replace(".sql", ".csv"))
-
-
-if __name__ == "__main__":
-    main()
+    return resultados
