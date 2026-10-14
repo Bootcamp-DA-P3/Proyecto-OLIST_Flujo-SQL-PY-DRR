@@ -25,6 +25,76 @@ Regla para decidir donde va cada limpieza:
 
 import pandas as pd
 
+# DATAFRAME 1 PEDIDOS ENTREGADOS
+
+def convertir_fechas_df1(df):
+#   1. Convertir fechas a datetime
+    date_columns = [
+        'order_purchase_timestamp', 'order_approved_at',
+        'order_delivered_carrier_date', 'order_delivered_customer_date',
+        'order_estimated_delivery_date', 'review_creation_date',
+        'review_answer_timestamp'
+]
+    for col in date_columns:
+        if col in df.columns:
+            df[col] = pd.to_datetime(df[col], errors='coerce')
+    return df
+
+def duplicados_df1(df):
+# Comprobamos si hay filas duplicadas
+    duplicados = df.duplicated().sum()
+    print(f"Número de filas duplicadas: {duplicados}")
+# Eliminamos las filas duplicadas
+    df = df.drop_duplicates()
+# Comprobamos cuántas filas nos quedan ahora
+    print(f"Número de filas después de limpiar duplicados: {len(df)}")
+    return df
+
+def valores_faltantes_df1(df):
+# 3. Analizar valores faltantes
+    missing = df.isnull().sum()
+    print("\nValores faltantes por columna:")
+    print(missing[missing > 0])
+# Documentación / Tratamiento: los comentarios nulos se rellenan con cadena vacía o indicador
+    df['review_comment_title'] = df['review_comment_title'].fillna('Sin título')
+    df['review_comment_message'] = df['review_comment_message'].fillna('Sin mensaje')
+# 3. Comprobamos los valores faltantes
+    missing = df.isnull().sum()
+    print("\nValores faltantes por columna:")
+    print(missing[missing > 0])
+    return df
+
+def normalizar_cadenas_df1(df):
+# 4. Normalizar cadenas (lower, trim)
+    str_columns = df.select_dtypes(include=['object', 'string']).columns
+    for col in str_columns:
+        df[col] = df[col].astype(str).str.strip().str.lower()
+    return df
+
+def corregir_tipos_numericos_df1(df):
+# 5. Corregir tipos numéricos de manera segura
+    df['customer_zip_code_prefix'] = df['customer_zip_code_prefix'].astype(str)
+
+# Convertimos a numérico primero para evitar problemas de casteo directo desde strings con decimales o nulos
+    review_score_numeric = pd.to_numeric(df['review_score'], errors='coerce')
+    df['review_score'] = review_score_numeric.round().astype('Int64')
+
+    payment_installments_numeric = pd.to_numeric(df['payment_installments'], errors='coerce')
+    df['payment_installments'] = payment_installments_numeric.round().astype('Int64')
+
+    df['payment_value'] = pd.to_numeric(df['payment_value'], errors='coerce')
+    return df
+
+def detectar_outliers_df1(df):
+# 6. Detectar outliers (Ejemplo con IQR en payment_value)
+    Q1 = df['payment_value'].quantile(0.25)
+    Q3 = df['payment_value'].quantile(0.75)
+    IQR = Q3 - Q1
+    outliers = df[(df['payment_value'] < (Q1 - 1.5 * IQR)) | (df['payment_value'] > (Q3 + 1.5 * IQR))]
+    print(f"\nNúmero de outliers detectados en payment_value: {len(outliers)}")
+    return df
+
+
 
 def tipar_fechas(df):
     """Convierte a fecha las columnas que lo son.
@@ -56,9 +126,9 @@ COMUNES = [tipar_fechas]
 # Reglas propias de cada dataset. Aqui van las vuestras del Proyecto III.
 LIMPIEZA = {
     "clientes_actividad": [],
-    "catalogo_productos": [marcar_ingresos_atipicos],
+    "catalogo_productos": [],
     "vendedores": [],
-    "entregas_retrasos": [],
+    "entregas_retrasos": [convertir_fechas_df1, duplicados_df1, valores_faltantes_df1, normalizar_cadenas_df1, corregir_tipos_numericos_df1, detectar_outliers_df1],
     "ventas_detalle": [],
 }
 

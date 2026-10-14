@@ -2,9 +2,7 @@
 -- Por actividad de compra entendemos método de pago, satisfacción y lugar desde donde se realiza el pedido
 
 -- Preparamos la geolocalización promediada e indexada
-DROP TABLE IF EXISTS temp_geolocation_clean;
 
-CREATE TABLE temp_geolocation_clean AS
 SELECT 
     geolocation_zip_code_prefix,
     AVG(geolocation_lat) AS geolocation_lat,
@@ -18,9 +16,7 @@ ALTER TABLE temp_geolocation_clean ADD PRIMARY KEY (geolocation_zip_code_prefix)
 
 -- CREAMOS EL NUEVO DATAFRAME (AGRUPANDO PAGOS Y REVIEWS)
 
-DROP TABLE IF EXISTS actividad_de_clientes;
 
-CREATE TABLE actividad_de_clientes AS
 SELECT 
     -- Columnas de customers (incluye customer_unique_id)
     c.customer_id,
@@ -93,9 +89,7 @@ LEFT JOIN temp_geolocation_clean g
     
 -- REALIZAMOS LA LIMPIEZA DEL DATAFRAME CREADO
 
-DROP TABLE IF EXISTS actividad_de_clientes_limpio;
 
-CREATE TABLE actividad_de_clientes_limpio AS
 SELECT 
     customer_id,
     customer_unique_id,
@@ -156,4 +150,3 @@ WHERE
     AND order_purchase_timestamp < order_delivered_customer_date;
 
 -- SELECT FINAL PARA EXTRAER LOS DATOS DESDE PYTHON
-SELECT * FROM actividad_de_clientes_limpio;

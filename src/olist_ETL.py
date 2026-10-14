@@ -34,7 +34,7 @@ CONSULTAS = {
     "ventas_detalle": "linea_id",
 
     # DIMENSIONES. Describen, y se unen al hecho por su clave.
-    "clientes_actividad": "customer_unique_id",
+    # "clientes_actividad": "customer_unique_id",
     "catalogo_productos": "product_id",
     "vendedores": "seller_id",
 
