@@ -119,6 +119,48 @@ def marcar_ingresos_atipicos(df):
     df["ingresos_atipico"] = df["ingresos"] > techo
     return df
 
+# ==========================================
+# NUESTRAS FUNCIONES DE LIMPIEZA (PROYECTO III)
+# ==========================================
+def normalizar_cadenas_texto_df2(df):
+    """Quita espacios en blanco y pasa a minusculas las columnas de texto generales."""
+    str_cols = df.select_dtypes(include=['object', 'string']).columns
+    for col in str_cols:
+        df[col] = df[col].astype(str).str.strip().str.lower()
+    return df
+
+
+def rellenar_comentarios_nulos_df2(df):
+    """Rellena los titulos y mensajes de comentarios vacios con texto por defecto."""
+    if 'review_comment_title' in df.columns:
+        df['review_comment_title'] = df['review_comment_title'].fillna('sin titulo')
+    if 'review_comment_message' in df.columns:
+        df['review_comment_message'] = df['review_comment_message'].fillna('sin mensaje')
+    return df
+
+
+def normalizar_catalogo_df2(df):
+    """Quita espacios en blanco y pasa a minusculas las columnas especificas del catalogo (df2)."""
+    if 'categoria_original' in df.columns:
+        df['categoria_original'] = df['categoria_original'].astype(str).str.strip().str.lower()
+    if 'categoria_traducida' in df.columns:
+        df['categoria_traducida'] = df['categoria_traducida'].astype(str).str.strip().str.lower()
+    return df
+
+
+def marcar_atipicos_ventas_df2(df):
+    """Marca los precios o costes de envio fuera del rango normal (outliers)."""
+    for col in ['price', 'freight_value']:
+        if col in df.columns:
+            q1 = df[col].quantile(0.25)
+            q3 = df[col].quantile(0.75)
+            iqr = q3 - q1
+            lim_superior = q3 + 1.5 * iqr
+            lim_inferior = q1 - 1.5 * iqr
+            df[f"{col}_atipico"] = (df[col] < lim_inferior) | (df[col] > lim_superior)
+    return df
+
+
 
 # Reglas que se aplican a todos los datasets.
 COMUNES = [tipar_fechas]
@@ -126,6 +168,9 @@ COMUNES = [tipar_fechas]
 # Reglas propias de cada dataset. Aqui van las vuestras del Proyecto III.
 LIMPIEZA = {
     "clientes_actividad": [],
+    "catalogo_productos": [normalizar_cadenas_texto_df2, normalizar_catalogo_df2,rellenar_comentarios_nulos_df2,marcar_atipicos_ventas_df2],
+    "vendedores": [],
+    "entregas_retrasos": [],
     "catalogo_productos": [],
     "vendedores": [],
     "entregas_retrasos": [convertir_fechas_df1, duplicados_df1, valores_faltantes_df1, normalizar_cadenas_df1, corregir_tipos_numericos_df1, detectar_outliers_df1],
