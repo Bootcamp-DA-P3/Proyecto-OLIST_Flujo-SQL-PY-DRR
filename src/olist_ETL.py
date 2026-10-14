@@ -34,7 +34,7 @@ CONSULTAS = {
     "ventas_detalle": "linea_id",
 
     # DIMENSIONES. Describen, y se unen al hecho por su clave.
-    "clientes_actividad": "customer_unique_id",
+    # "clientes_actividad": "customer_unique_id",
     "catalogo_productos": "product_id",
     "vendedores": "seller_id",
 
@@ -61,7 +61,7 @@ def crear_engine():
 
 def extraer(engine, nombre):
     """Ejecuta queries/<nombre>.sql y devuelve el resultado como DataFrame."""
-    ruta = RAIZ / f"{nombre}.sql"
+    ruta = CARPETA_QUERIES / f"{nombre}.sql"
     if not ruta.exists():
         raise FileNotFoundError(f"No existe la consulta {ruta}")
     # El punto y coma final sobra al enviar la consulta desde Python.
