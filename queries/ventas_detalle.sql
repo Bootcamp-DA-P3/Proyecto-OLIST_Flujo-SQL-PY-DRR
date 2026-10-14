@@ -1,4 +1,4 @@
--- GRANO: una fila = una linea de pedido entregado (linea_id)
+-- GRANO: una fila = una linea de pedido entregado /linea_id/
 -- PAPEL: TABLA DE HECHOS. Mide. Es el centro del modelo:
 --         las otras cuatro se unen a ella por su clave.
 --
@@ -23,8 +23,8 @@ SELECT
     i.freight_value                  AS flete,
     i.price + i.freight_value        AS importe_linea
 FROM order_items i
--- JOIN orders o
-    -- ON o.order_id = i.order_id
+JOIN orders o
+    ON o.order_id = i.order_id
 -- Mismo filtro que entregas_retrasos, para que las dos tablas encajen fila a fila.
 WHERE o.order_status = 'delivered'
   AND o.order_delivered_customer_date IS NOT NULL
