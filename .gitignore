@@ -220,3 +220,4 @@ __marimo__/
 # Ignorar archivos CSV
 
 *.csv
+**/*_old.*

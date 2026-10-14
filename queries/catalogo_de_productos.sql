@@ -1,8 +1,6 @@
 
 
 -- Creamos o reemplazamos la tabla con el resultado limpio y una única fila por producto
-DROP TABLE IF EXISTS df2_productos_limpios;
-CREATE TABLE df2_productos_limpios AS
 SELECT 
     p.product_id,
     COALESCE(LOWER(TRIM(p.product_category_name)), 'sin_categoria') AS categoria_original,
