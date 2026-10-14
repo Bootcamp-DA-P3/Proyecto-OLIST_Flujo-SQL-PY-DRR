@@ -129,6 +129,43 @@ def normalizar_cadenas_texto_df2(df):
         df[col] = df[col].astype(str).str.strip().str.lower()
     return df
 
+def limpiar_df3_vendedores(df):
+    """Limpieza del dataset Df3: una fila por vendedor."""
+    df = df.copy()
+
+    # Normalizar los textos conservando los valores nulos.
+    for columna in [
+        "seller_city_clean",
+        "seller_state_clean",
+        "product_category_name",
+    ]:
+        df[columna] = (
+            df[columna]
+            .astype("string")
+            .str.strip()
+            .str.lower()
+        )
+
+    # Convertir los contadores a números enteros.
+    for columna in [
+        "total_pedidos",
+        "total_productos_distintos",
+        "total_articulos_vendedor",
+    ]:
+        df[columna] = pd.to_numeric(
+            df[columna], errors="raise"
+        ).astype("Int64")
+
+    # Convertir los importes a números.
+    for columna in [
+        "precio_total_vendedor",
+        "transporte_total_vendedor",
+    ]:
+        df[columna] = pd.to_numeric(
+            df[columna], errors="raise"
+        )
+
+    return df
 
 def rellenar_comentarios_nulos_df2(df):
     """Rellena los titulos y mensajes de comentarios vacios con texto por defecto."""
@@ -168,6 +205,8 @@ COMUNES = [tipar_fechas]
 # Reglas propias de cada dataset. Aqui van las vuestras del Proyecto III.
 LIMPIEZA = {
     "clientes_actividad": [],
+    "catalogo_productos": [marcar_ingresos_atipicos],
+    "vendedores": [limpiar_df3_vendedores],
     "catalogo_productos": [normalizar_cadenas_texto_df2, normalizar_catalogo_df2,rellenar_comentarios_nulos_df2,marcar_atipicos_ventas_df2],
     "vendedores": [],
     "entregas_retrasos": [],
