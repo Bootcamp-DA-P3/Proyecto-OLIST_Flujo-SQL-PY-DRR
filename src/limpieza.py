@@ -98,7 +98,7 @@ COMUNES = [tipar_fechas]
 # Reglas propias de cada dataset. Aqui van las vuestras del Proyecto III.
 LIMPIEZA = {
     "clientes_actividad": [],
-    "catalogo_productos": [marcar_ingresos_atipicos],
+    "catalogo_productos": [normalizar_cadenas_texto_df2, normalizar_catalogo_df2,rellenar_comentarios_nulos_df2,marcar_atipicos_ventas_df2],
     "vendedores": [],
     "entregas_retrasos": [],
     "ventas_detalle": [],
