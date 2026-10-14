@@ -205,13 +205,8 @@ COMUNES = [tipar_fechas]
 # Reglas propias de cada dataset. Aqui van las vuestras del Proyecto III.
 LIMPIEZA = {
     "clientes_actividad": [],
-    "catalogo_productos": [marcar_ingresos_atipicos],
     "vendedores": [limpiar_df3_vendedores],
     "catalogo_productos": [normalizar_cadenas_texto_df2, normalizar_catalogo_df2,rellenar_comentarios_nulos_df2,marcar_atipicos_ventas_df2],
-    "vendedores": [],
-    "entregas_retrasos": [],
-    "catalogo_productos": [],
-    "vendedores": [],
     "entregas_retrasos": [convertir_fechas_df1, duplicados_df1, valores_faltantes_df1, normalizar_cadenas_df1, corregir_tipos_numericos_df1, detectar_outliers_df1],
     "ventas_detalle": [],
 }
